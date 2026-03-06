@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-03-04T02:19:09.402Z",
+  "transcriptsRoot": "/Users/snakashima/.cursor/projects/Users-snakashima-develop-other-visualize-VibeCoding-Mastering/agent-transcripts",
+  "sessions": [
+    {
+      "sessionId": "bef345ff-3aa0-42d8-9039-1d9fae3cec08",
+      "workspaceName": "Users-snakashima-develop-other-visualize-VibeCoding-Mastering",
+      "filePath": "../../../.cursor/projects/Users-snakashima-develop-other-visualize-VibeCoding-Mastering/agent-transcripts/bef345ff-3aa0-42d8-9039-1d9fae3cec08/bef345ff-3aa0-42d8-9039-1d9fae3cec08.jsonl",
+      "userMessages": 2,
+      "assistantMessages": 13,
+      "totalMessages": 15,
+      "toolUseCount": 0,
+      "toolCounts": {},
+      "skillUses": {},
+      "subagentUses": {},
+      "mcpUses": {},
+      "date": "2026-03-04",
+      "firstTs": null,
+      "lastTs": null
+    }
+  ],
+  "byDate": {
+    "2026-03-04": {
+      "sessions": 1,
+      "messages": 15,
+      "toolUses": 0
+    }
+  },
+  "byWorkspace": {
+    "Users-snakashima-develop-other-visualize-VibeCoding-Mastering": {
+      "sessions": 1,
+      "messages": 15,
+      "toolUses": 0
+    }
+  },
+  "toolTotals": {},
+  "skillTotals": {},
+  "subagentTotals": {},
+  "mcpTotals": {},
+  "summary": {
+    "totalSessions": 1,
+    "totalMessages": 15,
+    "totalToolUses": 0
+  }
+}

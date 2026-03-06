@@ -1,4 +1,4 @@
-.PHONY: dev api frontend collect test
+.PHONY: dev api frontend collect test install
 
 dev: ## バックエンドとフロントエンドを同時起動
 	make -j2 api frontend
@@ -14,3 +14,9 @@ collect: ## 手動でトランスクリプト全件を再収集
 
 test: ## テスト実行
 	uv run pytest tests/ -v
+
+install: ## collect-stats コマンドを ~/.local/bin にインストール
+	mkdir -p ~/.local/bin
+	printf '#!/bin/bash\npython3 "%s/collector.py" "$$@"\n' "$(CURDIR)" > ~/.local/bin/collect-stats
+	chmod +x ~/.local/bin/collect-stats
+	@echo "installed: ~/.local/bin/collect-stats"

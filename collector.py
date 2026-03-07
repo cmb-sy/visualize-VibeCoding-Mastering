@@ -223,8 +223,13 @@ def collect_session(jsonl_path: str, db_path: str | None = None) -> None:
 
 def collect_all() -> None:
     """~/.claude/projects/ 以下の全セッションを再収集する。"""
-    db_path = get_db_path()
-    init_db(db_path)
+    use_supabase = bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"))
+    if use_supabase:
+        db_path = None
+    else:
+        db_path = get_db_path()
+        init_db(db_path)
+
     projects_dir = Path.home() / ".claude" / "projects"
     if not projects_dir.exists():
         print("[collector] projects dir not found", file=sys.stderr)
@@ -235,7 +240,8 @@ def collect_all() -> None:
         collect_session(str(jsonl_file), db_path)
         count += 1
 
-    print(f"[collector] collected {count} sessions -> {db_path}")
+    dest = "Supabase" if use_supabase else db_path
+    print(f"[collector] collected {count} sessions -> {dest}")
 
 
 def collect_from_hook() -> None:

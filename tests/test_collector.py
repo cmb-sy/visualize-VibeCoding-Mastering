@@ -40,10 +40,8 @@ def test_collect_session_inserts_messages():
         conn = sqlite3.connect(db)
         rows = conn.execute("SELECT * FROM messages WHERE session_id='test-session-001'").fetchall()
         conn.close()
-        # assistantメッセージ2件
         assistant_msgs = [r for r in rows if r[2] == "assistant"]
         assert len(assistant_msgs) == 2
-        # 1件目: input_tokens=100, output_tokens=50
         tokens = {(r[4], r[5]) for r in assistant_msgs}
         assert (100, 50) in tokens
     finally:
@@ -100,7 +98,6 @@ def test_collect_session_is_idempotent():
         tool_count = conn.execute("SELECT COUNT(*) FROM tool_uses WHERE session_id='test-session-001'").fetchone()[0]
         conn.close()
         assert count == 1
-        # tool_uses は重複挿入されない（Bash + Task = 2）
-        assert tool_count == 2
+        assert tool_count == 2  # Bash + Task
     finally:
         os.unlink(db)

@@ -3,11 +3,12 @@ import sqlite3
 import os
 from pathlib import Path
 
-DEFAULT_DB_PATH = os.path.expanduser("~/.claude/stats.db")
-
 
 def get_db_path() -> str:
-    return os.environ.get("CLAUDE_STATS_DB", DEFAULT_DB_PATH)
+    path = os.environ.get("CLAUDE_STATS_DB")
+    if path:
+        return path
+    return str(Path.home() / ".claude" / "stats.db")
 
 
 def get_conn(db_path: str | None = None) -> sqlite3.Connection:

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.git/
+frontend/
+tests/
+docs/
+*.db
+.env
+.firebase/

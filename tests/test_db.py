@@ -5,7 +5,7 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from api.db import init_db, get_db_path
+from api.db import init_db
 
 def test_init_db_creates_tables():
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:

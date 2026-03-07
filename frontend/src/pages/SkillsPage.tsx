@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type SkillEntry, type SubagentEntry } from '../api'
+import { api, type SkillEntry, type SubagentEntry } from '../lib/queries'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie,

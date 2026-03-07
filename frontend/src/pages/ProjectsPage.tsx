@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type ProjectEntry } from '../api'
+import { api, type ProjectEntry } from '../lib/queries'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'

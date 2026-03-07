@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type Summary, type DailyEntry } from '../api'
+import { api, type Summary, type DailyEntry } from '../lib/queries'
 import { StatCard } from '../components/StatCard'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,

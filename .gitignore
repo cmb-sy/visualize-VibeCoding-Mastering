@@ -4,6 +4,7 @@ __pycache__/
 *.db
 frontend/node_modules/
 frontend/dist/
+frontend/.env.local
 app/node_modules/
 .env
 .firebase/

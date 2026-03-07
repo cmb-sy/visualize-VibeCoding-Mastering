@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd frontend && npm ci && npm run build",
+  "outputDirectory": "frontend/dist",
+  "framework": null,
+  "rewrites": [
+    { "source": "/((?!_vercel|[^/]+\\.).*)", "destination": "/index.html" }
+  ]
+}

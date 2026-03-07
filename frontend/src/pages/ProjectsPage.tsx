@@ -66,7 +66,6 @@ export function ProjectsPage() {
                   </td>
                   <td className="px-6 py-3">
                     <div className="font-medium text-gray-900 text-xs">{p.project_name}</div>
-                    <div className="text-xs text-gray-400 truncate max-w-xs mt-0.5">{p.project_path}</div>
                     <div className="mt-1.5 h-1 bg-gray-100 rounded-full w-48">
                       <div
                         className="h-1 rounded-full bg-indigo-500 transition-all"

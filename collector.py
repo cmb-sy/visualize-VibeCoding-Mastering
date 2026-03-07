@@ -17,6 +17,67 @@ from pathlib import Path
 
 from api.db import get_db_path, init_db, get_conn
 
+
+def _get_supabase_client():
+    """SUPABASE_URL と SUPABASE_SERVICE_KEY が設定されていれば Supabase クライアントを返す。"""
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    if not url or not key:
+        return None
+    from supabase import create_client
+    return create_client(url, key)
+
+
+def _write_to_supabase(client, session_id, project_path, project_name,
+                        started_at, ended_at, git_branch, model,
+                        messages_to_insert, tool_uses_to_insert,
+                        skill_uses_to_insert, subagent_uses_to_insert) -> None:
+    """Supabase にセッションデータを UPSERT する（冪等）。"""
+    collected_at = datetime.now(timezone.utc).isoformat()
+
+    client.table("sessions").upsert({
+        "session_id":   session_id,
+        "project_path": project_path,
+        "project_name": project_name,
+        "started_at":   started_at,
+        "ended_at":     ended_at,
+        "git_branch":   git_branch,
+        "model":        model,
+        "collected_at": collected_at,
+    }).execute()
+
+    for table in ("messages", "tool_uses", "skill_uses", "subagent_uses"):
+        client.table(table).delete().eq("session_id", session_id).execute()
+
+    if messages_to_insert:
+        client.table("messages").insert([
+            {
+                "session_id": s_id, "role": role, "timestamp": ts,
+                "input_tokens": inp, "output_tokens": out,
+                "cache_read_tokens": cr, "cache_write_tokens": cw,
+            }
+            for s_id, role, ts, inp, out, cr, cw in messages_to_insert
+        ]).execute()
+
+    if tool_uses_to_insert:
+        client.table("tool_uses").insert([
+            {"session_id": s_id, "tool_name": name, "timestamp": ts}
+            for s_id, name, ts in tool_uses_to_insert
+        ]).execute()
+
+    if skill_uses_to_insert:
+        client.table("skill_uses").insert([
+            {"session_id": s_id, "skill_name": name, "timestamp": ts}
+            for s_id, name, ts in skill_uses_to_insert
+        ]).execute()
+
+    if subagent_uses_to_insert:
+        client.table("subagent_uses").insert([
+            {"session_id": s_id, "subagent_type": st, "description": desc, "timestamp": ts}
+            for s_id, st, desc, ts in subagent_uses_to_insert
+        ]).execute()
+
+
 # Skill toolの呼び出しはskill_usesに記録するため、tool_usesから除外
 SKILL_TOOL_NAME = "Skill"
 TASK_TOOL_NAME = "Task"
@@ -57,7 +118,6 @@ def collect_session(jsonl_path: str, db_path: str | None = None) -> None:
         if entry_type == "summary":
             continue
 
-        # セッションメタデータを最初のユーザー/アシスタント行から取得
         if session_id is None and entry_type in ("user", "assistant"):
             session_id = entry.get("sessionId")
             project_path = entry.get("cwd", "")
@@ -119,17 +179,25 @@ def collect_session(jsonl_path: str, db_path: str | None = None) -> None:
         print("[collector] no session_id found, skipping", file=sys.stderr)
         return
 
+    supabase_client = _get_supabase_client() if db_path is None else None
+    if supabase_client:
+        _write_to_supabase(
+            supabase_client, session_id, project_path, project_name,
+            started_at, ended_at, git_branch, model,
+            messages_to_insert, tool_uses_to_insert,
+            skill_uses_to_insert, subagent_uses_to_insert,
+        )
+        return
+
     conn = get_conn(db_path)
     collected_at = datetime.now(timezone.utc).isoformat()
 
-    # セッションをUPSERT（再収集時に上書き）
     conn.execute("""
         INSERT OR REPLACE INTO sessions
             (session_id, project_path, project_name, started_at, ended_at, git_branch, model, collected_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (session_id, project_path, project_name, started_at, ended_at, git_branch, model, collected_at))
 
-    # 既存の詳細データを削除して再挿入（冪等性確保）
     for table in ("messages", "tool_uses", "skill_uses", "subagent_uses"):
         conn.execute(f"DELETE FROM {table} WHERE session_id = ?", (session_id,))
 

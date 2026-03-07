@@ -14,7 +14,7 @@ test: ## テスト実行
 
 install: ## collect-stats コマンドを ~/.local/bin にインストール
 	mkdir -p ~/.local/bin
-	printf '#!/bin/bash\npython3 "%s/collector.py" "$$@"\n' "$(CURDIR)" > ~/.local/bin/collect-stats
+	printf '#!/bin/bash\ncd "%s" && uv run python collector.py "$$@"\n' "$(CURDIR)" > ~/.local/bin/collect-stats
 	chmod +x ~/.local/bin/collect-stats
 	@echo "installed: ~/.local/bin/collect-stats"
 

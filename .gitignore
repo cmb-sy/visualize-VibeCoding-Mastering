@@ -9,3 +9,4 @@ app/node_modules/
 .env
 .firebase/
 *.json.key
+supabase/.temp/

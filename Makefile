@@ -12,11 +12,10 @@ collect: ## 手動でトランスクリプト全件を Supabase に再収集
 test: ## テスト実行
 	uv run pytest tests/ -v
 
-install: ## collect-stats コマンドを ~/.local/bin にインストール
-	mkdir -p ~/.local/bin
-	printf '#!/bin/bash\ncd "%s" && uv run python collector.py "$$@"\n' "$(CURDIR)" > ~/.local/bin/collect-stats
-	chmod +x ~/.local/bin/collect-stats
-	@echo "installed: ~/.local/bin/collect-stats"
+install: ## Stop hook 用にプロジェクトパスを登録
+	mkdir -p ~/.config/claude-stats
+	echo "$(CURDIR)" > ~/.config/claude-stats/project-path
+	@echo "registered: $(CURDIR) -> ~/.config/claude-stats/project-path"
 
 deploy: ## Vercel にデプロイ（vercel CLI が必要）
 	vercel --prod

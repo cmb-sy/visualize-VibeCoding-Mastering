@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type ToolEntry } from '../lib/queries'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
 
-const COLORS = ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6']
+const BAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6']
 
 export function ToolsPage() {
   const [tools, setTools] = useState<ToolEntry[]>([])
@@ -14,41 +11,54 @@ export function ToolsPage() {
     api.tools().then(d => { setTools(d); setLoading(false) })
   }, [])
 
-  if (loading) return <div className="text-gray-500">Loading...</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+        Loading...
+      </div>
+    )
+  }
+
+  const max = tools[0]?.count ?? 1
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Tool Usage</h2>
-        <ResponsiveContainer width="100%" height={Math.max(300, tools.length * 36)}>
-          <BarChart data={tools} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11 }} />
-            <YAxis dataKey="tool_name" type="category" tick={{ fontSize: 12 }} width={80} />
-            <Tooltip />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-              {tools.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-white rounded-xl shadow overflow-hidden">
+    <div className="flex flex-col gap-6">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-700">ツール利用ランキング</h2>
+        </div>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">#</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Tool</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600">Count</th>
+          <thead>
+            <tr className="border-b border-gray-100">
+              <th className="text-left px-6 py-3 font-medium text-gray-500 w-12">順位</th>
+              <th className="text-left px-6 py-3 font-medium text-gray-500">ツール名</th>
+              <th className="text-right px-6 py-3 font-medium text-gray-500 w-48">利用回数</th>
             </tr>
           </thead>
           <tbody>
-            {tools.map((t, i) => (
-              <tr key={t.tool_name} className="border-b last:border-0 hover:bg-gray-50">
-                <td className="px-4 py-2 text-gray-400">{i + 1}</td>
-                <td className="px-4 py-2 font-mono text-gray-900">{t.tool_name}</td>
-                <td className="px-4 py-2 text-right text-gray-900">{t.count.toLocaleString()}</td>
-              </tr>
-            ))}
+            {tools.map((t, i) => {
+              const barPct = (t.count / max) * 100
+              const color = BAR_COLORS[i % BAR_COLORS.length]
+              return (
+                <tr key={t.tool_name} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-3 text-gray-400 text-xs">{i + 1}</td>
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-gray-900 text-xs">{t.tool_name}</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full w-48">
+                      <div
+                        className="h-1.5 rounded-full transition-all"
+                        style={{ width: `${barPct}%`, backgroundColor: color }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 text-right font-bold text-gray-900">
+                    {t.count.toLocaleString()}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

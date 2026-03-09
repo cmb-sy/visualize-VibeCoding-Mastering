@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api, type Summary, type DailyEntry } from '../lib/queries'
 import { StatCard } from '../components/StatCard'
+import { MasteryCard } from '../components/MasteryCard'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Legend,
 } from 'recharts'
 
 interface Props {
   days: number
-}
-
-function fmtTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`
-  return String(n)
 }
 
 function fmtNum(n: number): string {
@@ -29,20 +25,41 @@ function calcTrend(curr: number, prev: number): number | undefined {
 interface PeriodStats {
   sessions: number
   cost: number
-  inputTokens: number
-  outputTokens: number
+  messages: number
+  skillUses: number
+  subagentUses: number
+  mcpUses: number
 }
 
 function sumDaily(entries: DailyEntry[]): PeriodStats {
   return entries.reduce(
     (acc, e) => ({
-      sessions: acc.sessions + e.sessions,
-      cost: acc.cost + e.estimated_cost_usd,
-      inputTokens: acc.inputTokens + e.input_tokens,
-      outputTokens: acc.outputTokens + e.output_tokens,
+      sessions:     acc.sessions     + e.sessions,
+      cost:         acc.cost         + e.estimated_cost_usd,
+      messages:     acc.messages     + (e.messages ?? 0),
+      skillUses:    acc.skillUses    + (e.skill_uses ?? 0),
+      subagentUses: acc.subagentUses + (e.subagent_uses ?? 0),
+      mcpUses:      acc.mcpUses      + (e.mcp_uses ?? 0),
     }),
-    { sessions: 0, cost: 0, inputTokens: 0, outputTokens: 0 }
+    { sessions: 0, cost: 0, messages: 0, skillUses: 0, subagentUses: 0, mcpUses: 0 }
   )
+}
+
+function calcMastery(summary: Summary) {
+  const { total_sessions, total_skill_uses, total_subagent_uses, total_mcp_uses, total_messages } = summary
+  if (total_sessions === 0 || total_messages === 0) {
+    return { score: 0, automationRate: 0, agentIntensity: 0, mcpIntensity: 0 }
+  }
+  const automationRate = ((total_skill_uses + total_subagent_uses + total_mcp_uses) / total_messages) * 100
+  const agentIntensity = total_subagent_uses / total_sessions
+  const mcpIntensity   = total_mcp_uses / total_sessions
+
+  const autoScore  = Math.min(automationRate / 100 * 100, 100) * 0.4
+  const agentScore = Math.min(agentIntensity / 20 * 100, 100) * 0.3
+  const mcpScore   = Math.min(mcpIntensity / 20 * 100, 100) * 0.3
+  const score = Math.round(autoScore + agentScore + mcpScore)
+
+  return { score, automationRate, agentIntensity, mcpIntensity }
 }
 
 export function DashboardPage({ days }: Props) {
@@ -60,50 +77,79 @@ export function DashboardPage({ days }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-        Loading...
-      </div>
+      <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Loading...</div>
     )
   }
   if (!summary) return <div className="text-red-500">Failed to load</div>
 
-  // 期間分割: 直近 days 日 vs 前期間
   const isAll = days === 9999
   const currentDaily = isAll ? allDaily : allDaily.slice(-days)
-  const prevDaily = isAll ? [] : allDaily.slice(0, -days)
+  const prevDaily    = isAll ? [] : allDaily.slice(0, -days)
 
   const current = sumDaily(currentDaily)
-  const prev = sumDaily(prevDaily)
+  const prev    = sumDaily(prevDaily)
 
-  // Sparkline データ（直近days日の日別値）
   const spark = (key: keyof DailyEntry) =>
     currentDaily.map(e => (e[key] as number) ?? 0)
 
-  const sessionTrend = isAll ? undefined : calcTrend(current.sessions, prev.sessions)
-  const costTrend = isAll ? undefined : calcTrend(current.cost, prev.cost)
-  const tokenTrend = isAll ? undefined : calcTrend(
-    current.inputTokens + current.outputTokens,
-    prev.inputTokens + prev.outputTokens
-  )
+  const trends = {
+    skill:    isAll ? undefined : calcTrend(current.skillUses,    prev.skillUses),
+    subagent: isAll ? undefined : calcTrend(current.subagentUses, prev.subagentUses),
+    mcp:      isAll ? undefined : calcTrend(current.mcpUses,      prev.mcpUses),
+    messages: isAll ? undefined : calcTrend(current.messages,     prev.messages),
+    sessions: isAll ? undefined : calcTrend(current.sessions,     prev.sessions),
+    cost:     isAll ? undefined : calcTrend(current.cost,         prev.cost),
+  }
 
-  // チャート表示用データ（直近 days 日 or 全期間）
-  const chartData = isAll
-    ? allDaily
-    : allDaily.slice(-Math.min(days, allDaily.length))
+  const mastery = calcMastery(summary)
+  const chartData = isAll ? allDaily : allDaily.slice(-Math.min(days, allDaily.length))
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Overview heading */}
       <div>
         <h2 className="text-base font-semibold text-gray-800">Overview</h2>
+        {!isAll && (
+          <p className="text-xs text-gray-400 mt-0.5">直近 {days} 日間のデータ</p>
+        )}
       </div>
 
-      {/* Metric cards */}
+      {/* 6 Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <StatCard
+          title="Skill実行数"
+          value={isAll ? fmtNum(summary.total_skill_uses) : fmtNum(current.skillUses)}
+          trend={trends.skill}
+          sparkData={spark('skill_uses')}
+          accentColor="#ec4899"
+          badge={{ label: 'Skill', color: '#ec4899' }}
+        />
+        <StatCard
+          title="Subagent数"
+          value={isAll ? fmtNum(summary.total_subagent_uses) : fmtNum(current.subagentUses)}
+          trend={trends.subagent}
+          sparkData={spark('subagent_uses')}
+          accentColor="#8b5cf6"
+          badge={{ label: 'Agent', color: '#8b5cf6' }}
+        />
+        <StatCard
+          title="MCP呼び出し"
+          value={isAll ? fmtNum(summary.total_mcp_uses) : fmtNum(current.mcpUses)}
+          trend={trends.mcp}
+          sparkData={spark('mcp_uses')}
+          accentColor="#06b6d4"
+          badge={{ label: 'MCP', color: '#06b6d4' }}
+        />
+        <StatCard
+          title="メッセージ"
+          value={isAll ? fmtNum(summary.total_messages) : fmtNum(current.messages)}
+          trend={trends.messages}
+          sparkData={spark('messages')}
+          accentColor="#f59e0b"
+        />
         <StatCard
           title="セッション"
           value={isAll ? summary.total_sessions.toLocaleString() : current.sessions.toLocaleString()}
-          trend={sessionTrend}
+          trend={trends.sessions}
           sparkData={spark('sessions')}
           accentColor="#10b981"
         />
@@ -111,47 +157,55 @@ export function DashboardPage({ days }: Props) {
           title="コスト"
           value={`$${(isAll ? summary.estimated_cost_usd : current.cost).toFixed(2)}`}
           sub="USD"
-          trend={costTrend}
+          trend={trends.cost}
           sparkData={spark('estimated_cost_usd')}
-          accentColor="#f59e0b"
+          accentColor="#f97316"
         />
-        <StatCard
-          title="トークン (In)"
-          value={fmtTokens(isAll ? summary.total_input_tokens : current.inputTokens)}
-          trend={tokenTrend}
-          sparkData={spark('input_tokens')}
-          accentColor="#6366f1"
-        />
-        <StatCard
-          title="トークン (Out)"
-          value={fmtTokens(isAll ? summary.total_output_tokens : current.outputTokens)}
-          sparkData={spark('output_tokens')}
-          accentColor="#8b5cf6"
-        />
-        <StatCard
-          title="スキル実行"
-          value={fmtNum(summary.total_skill_uses)}
-          accentColor="#ec4899"
-        />
-        <StatCard
-          title="サブエージェント"
-          value={fmtNum(summary.total_subagent_uses)}
-          accentColor="#06b6d4"
-        />
+      </div>
+
+      {/* 使いこなし度 */}
+      <MasteryCard
+        data={mastery}
+        trend={isAll ? undefined : trends}
+      />
+
+      {/* Activity Breakdown Chart */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">
+          日別 活動内訳 (Skill / Subagent / MCP)
+          {!isAll && ` — 直近 ${days} 日`}
+        </h2>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={chartData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }} barSize={6}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 10, fill: '#9ca3af' }}
+              tickFormatter={(d: string) => d.slice(5)}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} />
+            <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="skill_uses"    name="Skill"    fill="#ec4899" radius={[2,2,0,0]} stackId="a" />
+            <Bar dataKey="subagent_uses" name="Subagent" fill="#8b5cf6" radius={[2,2,0,0]} stackId="a" />
+            <Bar dataKey="mcp_uses"      name="MCP"      fill="#06b6d4" radius={[2,2,0,0]} stackId="a" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Daily Cost chart */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">
-          日別コスト (USD)
-          {!isAll && ` — 直近 ${days} 日`}
+          日別コスト (USD){!isAll && ` — 直近 ${days} 日`}
         </h2>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={chartData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                <stop offset="5%" stopColor="#f97316" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -178,52 +232,9 @@ export function DashboardPage({ days }: Props) {
             <Area
               type="monotone"
               dataKey="estimated_cost_usd"
-              stroke="#f59e0b"
+              stroke="#f97316"
               strokeWidth={2}
               fill="url(#costGrad)"
-              dot={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Daily Sessions chart */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">
-          日別セッション数
-          {!isAll && ` — 直近 ${days} 日`}
-        </h2>
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={chartData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
-            <defs>
-              <linearGradient id="sessGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 10, fill: '#9ca3af' }}
-              tickFormatter={(d: string) => d.slice(5)}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: '#9ca3af' }}
-              axisLine={false}
-              tickLine={false}
-              width={30}
-            />
-            <Tooltip
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="sessions"
-              stroke="#10b981"
-              strokeWidth={2}
-              fill="url(#sessGrad)"
               dot={false}
             />
           </AreaChart>

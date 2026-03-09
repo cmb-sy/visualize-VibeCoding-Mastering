@@ -1,20 +1,25 @@
 import { supabase } from './supabase'
 
-// ==================== 型定義 ====================
-
 export interface Summary {
+  // 既存
   total_sessions: number
+  total_tool_uses: number
+  total_skill_uses: number
+  total_subagent_uses: number
   total_input_tokens: number
   total_output_tokens: number
   total_cache_read_tokens: number
   total_cache_write_tokens: number
   estimated_cost_usd: number
-  total_tool_uses: number
   total_non_mcp_tool_uses: number
   total_mcp_uses: number
-  total_skill_uses: number
-  total_subagent_uses: number
   total_messages: number
+  // 003 追加
+  distinct_skills: number
+  distinct_subagent_types: number
+  distinct_mcp_tools: number
+  distinct_tools: number
+  assistant_messages: number
 }
 
 export interface DailyEntry {
@@ -41,8 +46,6 @@ export interface ProjectEntry {
   input_tokens: number
   output_tokens: number
 }
-
-// ==================== クエリ ====================
 
 async function query<T>(view: string, options?: { gte?: [string, string]; order?: string }): Promise<T[]> {
   let q = supabase.from(view).select('*')

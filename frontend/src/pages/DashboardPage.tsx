@@ -45,22 +45,6 @@ function sumDaily(entries: DailyEntry[]): PeriodStats {
   )
 }
 
-function calcMastery(summary: Summary) {
-  const { total_sessions, total_skill_uses, total_subagent_uses, total_mcp_uses, total_messages } = summary
-  if (total_sessions === 0 || total_messages === 0) {
-    return { score: 0, automationRate: 0, agentIntensity: 0, mcpIntensity: 0 }
-  }
-  const automationRate = ((total_skill_uses + total_subagent_uses + total_mcp_uses) / total_messages) * 100
-  const agentIntensity = total_subagent_uses / total_sessions
-  const mcpIntensity   = total_mcp_uses / total_sessions
-
-  const autoScore  = Math.min(automationRate / 100 * 100, 100) * 0.4
-  const agentScore = Math.min(agentIntensity / 20 * 100, 100) * 0.3
-  const mcpScore   = Math.min(mcpIntensity / 20 * 100, 100) * 0.3
-  const score = Math.round(autoScore + agentScore + mcpScore)
-
-  return { score, automationRate, agentIntensity, mcpIntensity }
-}
 
 export function DashboardPage({ days }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null)
@@ -110,7 +94,6 @@ export function DashboardPage({ days }: Props) {
     cost:     isAll ? undefined : calcTrend(current.cost,         prev.cost),
   }
 
-  const mastery = calcMastery(summary)
   const chartData = isAll ? allDaily : allDaily.slice(-Math.min(days, allDaily.length))
 
   return (
@@ -174,7 +157,7 @@ export function DashboardPage({ days }: Props) {
 
       {/* 使いこなし度 */}
       <MasteryCard
-        data={mastery}
+        summary={summary}
         trend={isAll ? undefined : trends}
       />
 

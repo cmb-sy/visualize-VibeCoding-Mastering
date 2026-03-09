@@ -74,7 +74,21 @@ ln -sf ~/dotfiles/claude ~/.claude/claude
 
 これにより Stop hook（`~/.claude/claude/hooks/stop.sh`）が有効になる。
 
-#### 5. 既存データを Supabase に収集
+#### 5. `~/.claude/projects/` の所有者を修正
+
+```bash
+sudo chown -R $(whoami):staff ~/.claude/projects/
+```
+
+**なぜ必要か？**
+
+`~/.claude/projects/` ディレクトリが `root` 所有で作成されているケースがある（Claude Code のインストール方法によって発生）。
+このディレクトリには Claude Code がセッションのトランスクリプト（JSONL）を書き込むが、`root` 所有だと一般ユーザー権限では書き込めず、ファイルが作成されない。
+結果として Stop hook が収集対象ファイルを見つけられず、Supabase にデータが届かない。
+
+上記コマンドで所有者をログインユーザーに変更することで、以降のセッション終了時に JSONL が正しく保存され、自動収集が機能するようになる。
+
+#### 6. 既存データを Supabase に収集
 
 ```bash
 make collect

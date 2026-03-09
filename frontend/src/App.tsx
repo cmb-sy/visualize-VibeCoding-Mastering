@@ -2,13 +2,11 @@ import { useState } from 'react'
 import { DashboardPage } from './pages/DashboardPage'
 import { ToolsPage } from './pages/ToolsPage'
 import { SkillsPage } from './pages/SkillsPage'
-import { ProjectsPage } from './pages/ProjectsPage'
 
 const TABS = [
   { id: 'dashboard', label: 'ダッシュボード' },
   { id: 'tools', label: 'ツール' },
   { id: 'skills', label: 'スキル & エージェント' },
-  { id: 'projects', label: 'プロジェクト' },
 ]
 
 const PERIODS = [
@@ -67,7 +65,6 @@ export default function App() {
         {tab === 'dashboard' && <DashboardPage days={period} />}
         {tab === 'tools' && <ToolsPage />}
         {tab === 'skills' && <SkillsPage />}
-        {tab === 'projects' && <ProjectsPage />}
       </main>
     </div>
   )

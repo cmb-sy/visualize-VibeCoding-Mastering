@@ -207,9 +207,9 @@ export function EfficiencyPage() {
               />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                formatter={(value: number, name: string) => [
-                  name === 'セッション数' ? value : value.toFixed(2),
-                  name,
+                formatter={(value: number | undefined, name: string | undefined) => [
+                  value == null ? '' : name === 'セッション数' ? value : value.toFixed(2),
+                  name ?? '',
                 ]}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -275,7 +275,7 @@ export function EfficiencyPage() {
               />
               <ReferenceLine y={50} stroke="#10b981" strokeDasharray="4 4" label={{ value: '目標 50%', fontSize: 9, fill: '#10b981' }} />
               <Tooltip
-                formatter={(v: number) => [`${v.toFixed(1)}%`, 'Cache ヒット率']}
+                formatter={(v: number | undefined) => [v == null ? '' : `${v.toFixed(1)}%`, 'Cache ヒット率']}
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
               />
               <Area
@@ -308,7 +308,7 @@ export function EfficiencyPage() {
                 width={30}
               />
               <Tooltip
-                formatter={(v: number) => [v, 'セッション数']}
+                formatter={(v: number | undefined) => [v ?? '', 'セッション数']}
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
               />
               <Bar dataKey="count" name="セッション数" radius={[3, 3, 0, 0]}>

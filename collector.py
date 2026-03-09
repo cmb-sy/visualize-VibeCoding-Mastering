@@ -1,14 +1,3 @@
-# collector.py
-"""
-Claude Codeトランスクリプト（JSONL）を解析してSQLiteに保存する。
-
-Usage:
-  # Stopフックから（stdinでJSON受信）
-  python3 collector.py
-
-  # 全セッションを再収集
-  python3 collector.py --all
-"""
 import json
 import os
 import sys
@@ -257,8 +246,12 @@ def collect_from_hook() -> None:
         print("[collector] no transcript_path in hook input", file=sys.stderr)
         sys.exit(0)
 
-    db_path = get_db_path()
-    init_db(db_path)
+    use_supabase = bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"))
+    if use_supabase:
+        db_path = None
+    else:
+        db_path = get_db_path()
+        init_db(db_path)
     collect_session(transcript_path, db_path)
 
 

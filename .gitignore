@@ -10,3 +10,4 @@ app/node_modules/
 .firebase/
 *.json.key
 supabase/.temp/
+.vercel

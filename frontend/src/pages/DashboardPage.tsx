@@ -82,9 +82,6 @@ export function DashboardPage({ days }: Props) {
   const current = sumDaily(currentDaily)
   const prev    = sumDaily(prevDaily)
 
-  const spark = (key: Exclude<keyof DailyEntry, 'date'>) =>
-    currentDaily.map(e => (e[key] as number) ?? 0)
-
   const trends = {
     skill:    isAll ? undefined : calcTrend(current.skillUses,    prev.skillUses),
     subagent: isAll ? undefined : calcTrend(current.subagentUses, prev.subagentUses),
@@ -111,7 +108,6 @@ export function DashboardPage({ days }: Props) {
           title="Skill実行数"
           value={isAll ? fmtNum(summary.total_skill_uses) : fmtNum(current.skillUses)}
           trend={trends.skill}
-          sparkData={spark('skill_uses')}
           accentColor="#ec4899"
           badge={{ label: 'Skill', color: '#ec4899' }}
         />
@@ -119,7 +115,6 @@ export function DashboardPage({ days }: Props) {
           title="Subagent数"
           value={isAll ? fmtNum(summary.total_subagent_uses) : fmtNum(current.subagentUses)}
           trend={trends.subagent}
-          sparkData={spark('subagent_uses')}
           accentColor="#8b5cf6"
           badge={{ label: 'Agent', color: '#8b5cf6' }}
         />
@@ -127,7 +122,6 @@ export function DashboardPage({ days }: Props) {
           title="MCP呼び出し"
           value={isAll ? fmtNum(summary.total_mcp_uses) : fmtNum(current.mcpUses)}
           trend={trends.mcp}
-          sparkData={spark('mcp_uses')}
           accentColor="#06b6d4"
           badge={{ label: 'MCP', color: '#06b6d4' }}
         />
@@ -135,14 +129,12 @@ export function DashboardPage({ days }: Props) {
           title="メッセージ"
           value={isAll ? fmtNum(summary.total_messages) : fmtNum(current.messages)}
           trend={trends.messages}
-          sparkData={spark('messages')}
           accentColor="#f59e0b"
         />
         <StatCard
           title="セッション"
           value={isAll ? summary.total_sessions.toLocaleString() : current.sessions.toLocaleString()}
           trend={trends.sessions}
-          sparkData={spark('sessions')}
           accentColor="#10b981"
         />
         <StatCard
@@ -150,7 +142,6 @@ export function DashboardPage({ days }: Props) {
           value={`$${(isAll ? summary.estimated_cost_usd : current.cost).toFixed(2)}`}
           sub="USD"
           trend={trends.cost}
-          sparkData={spark('estimated_cost_usd')}
           accentColor="#f97316"
         />
       </div>

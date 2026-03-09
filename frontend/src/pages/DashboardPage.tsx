@@ -66,13 +66,21 @@ export function DashboardPage({ days }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [allDaily, setAllDaily] = useState<DailyEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([api.summary(), api.daily(days === 9999 ? 3650 : days * 2)]).then(([s, d]) => {
-      setSummary(s)
-      setAllDaily(d)
-      setLoading(false)
-    })
+    setLoading(true)
+    setError(null)
+    Promise.all([api.summary(), api.daily(days === 9999 ? 3650 : days * 2)])
+      .then(([s, d]) => {
+        setSummary(s)
+        setAllDaily(d)
+        setLoading(false)
+      })
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'データの取得に失敗しました')
+        setLoading(false)
+      })
   }, [days])
 
   if (loading) {
@@ -80,6 +88,7 @@ export function DashboardPage({ days }: Props) {
       <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Loading...</div>
     )
   }
+  if (error) return <div className="text-red-500 text-sm p-4">{error}</div>
   if (!summary) return <div className="text-red-500">Failed to load</div>
 
   const isAll = days === 9999
@@ -89,7 +98,7 @@ export function DashboardPage({ days }: Props) {
   const current = sumDaily(currentDaily)
   const prev    = sumDaily(prevDaily)
 
-  const spark = (key: keyof DailyEntry) =>
+  const spark = (key: Exclude<keyof DailyEntry, 'date'>) =>
     currentDaily.map(e => (e[key] as number) ?? 0)
 
   const trends = {
@@ -188,8 +197,8 @@ export function DashboardPage({ days }: Props) {
             <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="skill_uses"    name="Skill"    fill="#ec4899" radius={[2,2,0,0]} stackId="a" />
-            <Bar dataKey="subagent_uses" name="Subagent" fill="#8b5cf6" radius={[2,2,0,0]} stackId="a" />
+            <Bar dataKey="skill_uses"    name="Skill"    fill="#ec4899" stackId="a" />
+            <Bar dataKey="subagent_uses" name="Subagent" fill="#8b5cf6" stackId="a" />
             <Bar dataKey="mcp_uses"      name="MCP"      fill="#06b6d4" radius={[2,2,0,0]} stackId="a" />
           </BarChart>
         </ResponsiveContainer>

@@ -49,18 +49,25 @@ export function ToolsPage() {
   const [mcpTools, setMcpTools] = useState<ToolEntry[]>([])
   const [tab, setTab]           = useState<'tools' | 'mcp'>('tools')
   const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([api.tools(), api.mcpTools()]).then(([t, m]) => {
-      setTools(t)
-      setMcpTools(m)
-      setLoading(false)
-    })
+    Promise.all([api.tools(), api.mcpTools()])
+      .then(([t, m]) => {
+        setTools(t)
+        setMcpTools(m)
+        setLoading(false)
+      })
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'データの取得に失敗しました')
+        setLoading(false)
+      })
   }, [])
 
   if (loading) {
     return <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Loading...</div>
   }
+  if (error) return <div className="text-red-500 text-sm p-4">{error}</div>
 
   return (
     <div className="flex flex-col gap-6">

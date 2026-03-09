@@ -47,6 +47,34 @@ export interface ProjectEntry {
   output_tokens: number
 }
 
+export interface SessionStats {
+  session_id: string
+  project_name: string
+  started_at: string
+  duration_minutes: number
+  user_turns: number
+  code_edits: number
+  efficiency_score: number
+  total_input_tokens: number
+  total_output_tokens: number
+  total_cache_read: number
+  cache_hit_rate: number
+  context_growth_factor: number
+  clear_count: number
+  estimated_cost_usd: number
+}
+
+export interface WeeklyEfficiency {
+  week: string
+  sessions: number
+  median_efficiency: number
+  avg_efficiency: number
+  avg_cache_hit_rate: number
+  avg_context_growth: number
+  total_code_edits: number
+  total_user_turns: number
+}
+
 async function query<T>(view: string, options?: { gte?: [string, string]; order?: string }): Promise<T[]> {
   let q = supabase.from(view).select('*')
   if (options?.gte) q = q.gte(options.gte[0], options.gte[1])
@@ -75,4 +103,13 @@ export const api = {
   skills:    (): Promise<SkillEntry[]>    => query<SkillEntry>('skill_stats'),
   subagents: (): Promise<SubagentEntry[]> => query<SubagentEntry>('subagent_stats'),
   projects:  (): Promise<ProjectEntry[]>  => query<ProjectEntry>('project_stats'),
+
+  sessions: (days = 365): Promise<SessionStats[]> => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    const cutoffStr = cutoff.toISOString().slice(0, 10)
+    return query<SessionStats>('session_stats', { gte: ['started_at', cutoffStr], order: 'started_at' })
+  },
+  weeklyEfficiency: (): Promise<WeeklyEfficiency[]> =>
+    query<WeeklyEfficiency>('weekly_efficiency', { order: 'week' }),
 }

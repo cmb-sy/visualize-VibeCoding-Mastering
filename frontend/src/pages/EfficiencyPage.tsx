@@ -349,6 +349,8 @@ export function EfficiencyPage() {
                 type="number"
                 dataKey="total_input_tokens"
                 name="Input Tokens"
+                scale="log"
+                domain={['auto', 'auto']}
                 tick={{ fontSize: 10, fill: '#9ca3af' }}
                 axisLine={false} tickLine={false}
                 width={50}

@@ -3,15 +3,14 @@
 -- ==================== summary_stats 更新 ====================
 -- total_mcp_uses / total_messages を追加
 
+-- CREATE OR REPLACE VIEW は既存カラムの順序を変えられないため、
+-- 既存9カラムを 001_init.sql と同じ順序で維持し、新規3カラムを末尾に追加
 CREATE OR REPLACE VIEW summary_stats AS
 SELECT
     (SELECT COUNT(*) FROM sessions)                                         AS total_sessions,
     (SELECT COUNT(*) FROM tool_uses)                                        AS total_tool_uses,
-    (SELECT COUNT(*) FROM tool_uses WHERE tool_name NOT LIKE 'mcp__%')      AS total_non_mcp_tool_uses,
-    (SELECT COUNT(*) FROM tool_uses WHERE tool_name LIKE 'mcp__%')          AS total_mcp_uses,
     (SELECT COUNT(*) FROM skill_uses)                                       AS total_skill_uses,
     (SELECT COUNT(*) FROM subagent_uses)                                    AS total_subagent_uses,
-    (SELECT COUNT(*) FROM messages)                                         AS total_messages,
     COALESCE(SUM(m.input_tokens), 0)                                        AS total_input_tokens,
     COALESCE(SUM(m.output_tokens), 0)                                       AS total_output_tokens,
     COALESCE(SUM(m.cache_read_tokens), 0)                                   AS total_cache_read_tokens,
@@ -19,7 +18,10 @@ SELECT
     COALESCE(ROUND(SUM(
         m.input_tokens  * COALESCE(mc.input_cost_per_million,  3.0) +
         m.output_tokens * COALESCE(mc.output_cost_per_million, 15.0)
-    ) / 1000000.0, 4), 0)                                                   AS estimated_cost_usd
+    ) / 1000000.0, 4), 0)                                                   AS estimated_cost_usd,
+    (SELECT COUNT(*) FROM tool_uses WHERE tool_name NOT LIKE 'mcp__%')      AS total_non_mcp_tool_uses,
+    (SELECT COUNT(*) FROM tool_uses WHERE tool_name LIKE 'mcp__%')          AS total_mcp_uses,
+    (SELECT COUNT(*) FROM messages)                                         AS total_messages
 FROM messages m
 JOIN sessions s ON m.session_id = s.session_id
 LEFT JOIN model_costs mc ON s.model = mc.model

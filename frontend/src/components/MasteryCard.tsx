@@ -76,14 +76,6 @@ function TrendBadge({ value, label }: { value: number | undefined; label: string
   )
 }
 
-function StatBox({ value, label, color }: { value: string | number; label: string; color: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-gray-100 p-4 gap-1">
-      <span className="text-2xl font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-[11px] text-gray-400 text-center leading-tight whitespace-pre-line">{label}</span>
-    </div>
-  )
-}
 
 function SectionTitle({ label, desc }: { label: string; desc: string }) {
   return (
@@ -154,20 +146,6 @@ export function MasteryCard({ summary, trend }: Props) {
               )}
             </div>
           )}
-        </div>
-
-        <div className="border-t border-gray-100" />
-
-        {/* B: 多様性 */}
-        <div>
-          <SectionTitle label="B 多様性" desc="何種類の機能を使ったか" />
-          <p className="text-xs text-gray-400 mb-3">使っている機能の「幅」を測ります。同じ機能を繰り返すより、多様な機能を活用しているほど高くなります。</p>
-          <div className="grid grid-cols-4 gap-3">
-            <StatBox value={summary.distinct_skills}         label={'Skill\n種類数'}         color="#ec4899" />
-            <StatBox value={summary.distinct_subagent_types} label={'Subagent\nタイプ数'}    color="#8b5cf6" />
-            <StatBox value={summary.distinct_mcp_tools}      label={'MCPツール\n種類数'}      color="#06b6d4" />
-            <StatBox value={summary.distinct_tools}          label={'Built-in\nツール種類数'} color="#6366f1" />
-          </div>
         </div>
 
         <div className="border-t border-gray-100" />

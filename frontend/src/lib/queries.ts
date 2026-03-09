@@ -10,8 +10,11 @@ export interface Summary {
   total_cache_write_tokens: number
   estimated_cost_usd: number
   total_tool_uses: number
+  total_non_mcp_tool_uses: number
+  total_mcp_uses: number
   total_skill_uses: number
   total_subagent_uses: number
+  total_messages: number
 }
 
 export interface DailyEntry {
@@ -21,6 +24,11 @@ export interface DailyEntry {
   cache_read_tokens: number
   sessions: number
   estimated_cost_usd: number
+  messages: number
+  mcp_uses: number
+  tool_uses: number
+  skill_uses: number
+  subagent_uses: number
 }
 
 export interface ToolEntry    { tool_name: string; count: number }
@@ -60,6 +68,7 @@ export const api = {
   },
 
   tools:     (): Promise<ToolEntry[]>     => query<ToolEntry>('tool_stats'),
+  mcpTools:  (): Promise<ToolEntry[]>     => query<ToolEntry>('mcp_stats'),
   skills:    (): Promise<SkillEntry[]>    => query<SkillEntry>('skill_stats'),
   subagents: (): Promise<SubagentEntry[]> => query<SubagentEntry>('subagent_stats'),
   projects:  (): Promise<ProjectEntry[]>  => query<ProjectEntry>('project_stats'),

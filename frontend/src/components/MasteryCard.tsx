@@ -103,10 +103,9 @@ export function MasteryCard({ summary, trend }: Props) {
   const actionsPerSession  = s > 0 ? totalActions / s : 0
   const scoreC             = sigmoid(actionsPerSession, 20)
   const breakdownC = [
-    { label: 'Built-in ツール', value: summary.total_non_mcp_tool_uses, color: '#6366f1' },
-    { label: 'MCP',             value: summary.total_mcp_uses,          color: '#06b6d4' },
-    { label: 'Skill',           value: summary.total_skill_uses,        color: '#ec4899' },
-    { label: 'Subagent',        value: summary.total_subagent_uses,     color: '#8b5cf6' },
+    { label: 'MCP',      value: summary.total_mcp_uses,      color: '#06b6d4' },
+    { label: 'Skill',    value: summary.total_skill_uses,    color: '#ec4899' },
+    { label: 'Subagent', value: summary.total_subagent_uses, color: '#8b5cf6' },
   ]
   const maxValC = Math.max(...breakdownC.map(b => b.value), 1)
 

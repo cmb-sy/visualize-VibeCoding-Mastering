@@ -370,7 +370,6 @@ export function EfficiencyPage() {
                       <p>Input tokens: {s.total_input_tokens.toLocaleString()}</p>
                       <p>Cache hit: {s.cache_hit_rate.toFixed(1)}%</p>
                       <p>所要時間: {s.duration_minutes.toFixed(0)} 分</p>
-                      <p>コスト: ${s.estimated_cost_usd.toFixed(4)}</p>
                       {s.clear_count > 0 && (
                         <p className="text-red-500">/clear 推定: {s.clear_count} 回</p>
                       )}
